@@ -1,0 +1,69 @@
+﻿generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  phone         String
+  password      String
+  role          String         @default("CITIZEN")
+  departmentId  String?
+  department    Department?    @relation(fields: [departmentId], references: [id])
+  isActive      Boolean        @default(true)
+  isVerified    Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  complaints    Complaint[]
+  notifications Notification[]
+}
+
+model Department {
+  id           String      @id @default(uuid())
+  name         String
+  code         String      @unique
+  description  String?
+  contactEmail String?
+  contactPhone String?
+  users        User[]
+  complaints   Complaint[]
+}
+
+model Complaint {
+  id              String      @id @default(uuid())
+  complaintNumber String      @unique
+  title           String
+  description     String
+  latitude        Float
+  longitude       Float
+  address         String?
+  ward            String?
+  roadType        String      @default("RESIDENTIAL")
+  damageType      String?
+  severity        String      @default("MEDIUM")
+  priority        Int         @default(5)
+  status          String      @default("SUBMITTED")
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  name               String
+  email              String             @unique
+  phone              String
+  password           String
+  role               String             @default("CITIZEN")
+  departmentId       String?
+  department         Department?        @relation(fields: [departmentId], references: [id])
+  isActive           Boolean            @default(true)
+  isVerified         Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  complaints         Complaint[]
+  notifications      Notification[]
+  assignedComplaints Complaint[]        @relation("AssignedTo")
+  complaintHistory   ComplaintHistory[]
+  contractorId       String?
+  contractor         Contractor?        @relation(fields: [contractorId], references: [id])
+}
+
+model Department {
+  id           String      @id @default(uuid())
+  name         String
+  code         String      @unique
+  description  String?
+  contactEmail String?
+  contactPhone String?
+  users        User[]
+  complaints   Complaint[]
+}
+
+model Complaint {
+  id              String             @id @default(uuid())
+  complaintNumber String             @unique
+  title           String
+  description     String
+  latitude        Float
+  longitude       Float
+  address         String?
+  ward            String?
+  roadType        String             @default("RESIDENTIAL")
+  damageType      String?
+  severity        String?
+  aiDetails       Json?              // Stores raw AI output (Advisory Only)
+  priority        Int                @default(5)
+  status          String             @default("SUBMITTED") // SUBMITTED -> VERIFIED -> ASSIGNED -> IN_PROGRESS -> COMPLETED -> CLOSED
+  userId          String
+  user            User               @relation(fields: [userId], references: [id])
+  assignedToId    String?
+  assignedTo      User?              @relation("AssignedTo", fields: [assignedToId], references: [id])
+  departmentId    String?
+  department      Department?        @relation(fields: [departmentId], references: [id])
+  contractorId    String?
+  contractor      Contractor?        @relation(fields: [contractorId], references: [id])
+  slaDeadline     DateTime?
+  verifiedAt      DateTime?
+  assignedAt      DateTime?
+  inProgressAt    DateTime?
+  resolvedAt      DateTime?
+  images          ComplaintImage[]
+  history         ComplaintHistory[]
+  auditLogs       AuditLog[]
+  workOrders      WorkOrder[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model ComplaintImage {
+  id           String    @id @default(uuid())
+  complaintId  String
+  complaint    Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  imageUrl     String
+  originalName String
+  fileSize     Int?
+  mimeType     String?
+  isProof      Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+}
+
+// Legacy History (Keep for backward compatibility)
+model ComplaintHistory {
+  id            String    @id @default(uuid())
+  complaintId   String
+  complaint     Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  action        String
+  oldValue      String?
+  newValue      String?
+  comments      String?
+  performedById String
+  performedBy   User      @relation(fields: [performedById], references: [id])
+  createdAt     DateTime  @default(now())
+}
+
+// Strict Audit Log (Immutable)
+model AuditLog {
+  id            String    @id @default(uuid())
+  complaintId   String
+  complaint     Complaint @relation(fields: [complaintId], references: [id])
+  action        String
+  details       Json?
+  ipAddress     String?
+  performedById String
+  timestamp     DateTime  @default(now())
+}
+
+model Contractor {
+  id            String      @id @default(uuid())
+  name          String
+  companyName   String
+  phone         String
+  email         String?
+  address       String?
+  licenseNumber String      @unique
+  rating        Float       @default(0)
+  completedJobs Int         @default(0)
+  activeJobs    Int         @default(0)
+  isActive      Boolean     @default(true)
+  complaints    Complaint[]
+  workOrders    WorkOrder[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  users         User[]
+}
+
+model WorkOrder {
+  id              String     @id @default(uuid())
+  orderNumber     String     @unique
+  complaintId     String
+  complaint       Complaint  @relation(fields: [complaintId], references: [id])
+  contractorId    String
+  contractor      Contractor @relation(fields: [contractorId], references: [id])
+  description     String?
+  estimatedCost   Float?
+  actualCost      Float?
+  acceptedAt      DateTime?
+  rejectionReason String?
+  startDate       DateTime?
+  dueDate         DateTime?
+  completedAt     DateTime?
+  proofImageUrl   String?
+  completionNotes String?
+  status          String     @default("PENDING")
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
