@@ -8,7 +8,7 @@ The system utilizes a modular service architecture designed for performance and 
 
 ### Architecture Overview
 
-\\\mermaid
+```mermaid
 graph TD
     subgraph Clients
         Citizen[Citizen Mobile App - React PWA]
@@ -29,7 +29,7 @@ graph TD
     API <--> AIService
     API <--> DB
     API <--> Storage
-\\\
+```
 
 ## Core Features
 
@@ -64,21 +64,21 @@ graph TD
 - PostgreSQL
 
 ### Infrastructure Setup
-\\\ash
+```bash
 docker-compose up -d
-\\\
+```
 
 ### Backend Configuration
-\\\ash
+```bash
 cd backend
 npm install
 cp .env.example .env
 npx prisma migrate dev
 npm run dev
-\\\
+```
 
 ### AI Service Deployment
-\\\ash
+```bash
 cd ai-service
 python -m venv venv
 # Windows
@@ -88,12 +88,12 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 python model_server.py
-\\\
+```
 
 ### Application Development Servers
-- **Citizen App**: \cd citizen-app && npm install && npm run dev\
-- **Official Dashboard**: \cd official-dashboard && npm install && npm run dev\
-- **Contractor App**: \cd contractor-app && npm install && npm run dev\
+- **Citizen App**: `cd citizen-app && npm install && npm run dev`
+- **Official Dashboard**: `cd official-dashboard && npm install && npm run dev`
+- **Contractor App**: `cd contractor-app && npm install && npm run dev`
 
 ## License
 
